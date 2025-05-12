@@ -1,0 +1,102 @@
+---
+title: Tokenizer: Description and Requirements
+---
+
+1. Objective
+
+Create a mechanism to split (simplified) SQL statements into tokens to be passed to the parser component. This document defines the tokenizer's requirements in order to clarify its operations and behavior.
+
+2. Character Classes
+
+This implementation assumes that only ASCII characters compose SQL statements. The following character classes are defined for convenience:
+
+	2.1 WHITESPACE
+
+		One of these five characters: 9, 10, 12, 13, 32
+
+	2.2 ALPHABETIC
+
+		Any character in the range [65-90], or [97-122], or the character 95
+
+	2.3 NUMERIC
+
+		Any character in the range [48-57]
+
+	2.4 ALPHANUMERIC
+
+		Any character that is ALPHABETIC or NUMERIC
+
+	2.5 HEXADECIMAL
+
+		Any NUMERIC character, or in the range [65-70], or [97-102]
+
+	2.6 SPECIAL
+
+		Any character that is not WHITESPACE, ALPHABETIC, or NUMERIC
+
+3. Functional Requirements
+
+3.1 Token Requirements
+
+- **FR001**: The input SQL text must be split into tokens, from left to right.
+- **FR002**: At each step of tokenizing the SQL, the longest possible token must be extracted from the remaining input text.
+- **FR003**: The Tokenizer must pass each token that is not WHITESPACE to the parser in the order tokens are encountered.
+- **FR004**: When the Tokenizer reaches the end of input and the last token sent to the parser was not a SEMI token, it must send a SEMI token to the parser.
+- **FR005**: When the Tokenizer encounters text that is not a valid token, it must raise an error.
+
+3.2 Whitespace Token Requirements
+
+- **FR006**: The Tokenizer must recognize a sequence of one or more WHITESPACE characters as a single WHITESPACE token.
+- **FR007**: The Tokenizer must recognize as a WHITESPACE token the sequence of two characters "--" (45, 45) followed by any sequence of one or more characters up to and including the first character 10 (i.e., "\n"), or end-of-file.
+- **FR008**: The Tokenizer must recognize as a WHITESPACE token the sequence of two characters "/" (47, 42) followed by any sequence of one or more characters up to and including the sequence "/" (42, 47), or end-of-file.
+
+3.3 Identifier Token Requirements
+
+- **FR009**: The Tokenizer must recognize as an ID token any sequence that begins with an ALPHABETIC character and continues with zero or more ALPHANUMERIC and/or "$" (36) characters and that is not a reserved keyword.
+- **FR010**: The Tokenizer must recognize as an ID token any sequence that begins with a double quote (32), followed by zero or more characters and/or paired double quotes (32), and ends with a double quote (32) that is not part of a pair.
+
+3.4 Literal Token Requirements
+
+- **FR011**: The Tokenizer must recognize as a STRING token any sequence that begins with a single quote (39), is followed by zero or more characters and/or paired single quotes, and ends with a single quote (39) that is not part of a pair.
+- **FR012**: The Tokenizer must recognize as an INTEGER token any sequence of one or more NUMERIC characters.
+- **FR013**: The Tokenizer must recognize as a FLOAT token any sequence of one or more NUMERIC characters that includes exactly one dot (46).
+- **FR014**: The Tokenizer must recognize as a FLOAT token any sequence of one or more NUMERIC characters that includes zero or one dot (46) followed by an exponent suffix "E" (69) or "e" (101).
+
+3.5 Variable Token Requirements
+
+Auxiliary definition: A "parameter name" is defined as a sequence of one or more characters composed of ALPHANUMERIC and/or "$" (36) characters mixed with colons (58) - which may not appear consecutively - and optionally followed by any sequence of ALPHANUMERIC characters in parentheses (40, 41).
+
+- **FR015**: The Tokenizer must recognize as a VARIABLE token a question mark (63) followed by zero or more NUMERIC characters.
+- **FR016**: The Tokenizer must recognize as a VARIABLE token an at sign (64), dollar sign (36), or colon (58), followed by a parameter name.
+- **FR017**: The Tokenizer must recognize as a VARIABLE token a hash (35) followed by a parameter name that does not start with a NUMERIC character.
+- **FR018**: The Tokenizer must recognize as a REGISTER token a hash (35) followed by one or more NUMERIC characters.
+
+3.6 Operator Token Requirements
+
+- **FR019**: The Tokenizer must recognize as a MINUS token the character "-" (45).
+- **FR020**: The Tokenizer must recognize as an LP token the character "(" (40).
+- **FR021**: The Tokenizer must recognize as an RP token the character ")" (41).
+- **FR022**: The Tokenizer must recognize as a SEMI token the character ";" (59).
+- **FR023**: The Tokenizer must recognize as a PLUS token the character "+" (43).
+- **FR024**: The Tokenizer must recognize as a STAR token the character "*" (42).
+- **FR025**: The Tokenizer must recognize as a SLASH token the character "/" (47).
+- **FR026**: The Tokenizer must recognize as a REM token the character "%" (37).
+- **FR027**: The Tokenizer must recognize as an EQ token the character "=" (61).
+- **FR028**: The Tokenizer must recognize as an EQ token the sequence "==" (61, 61).
+- **FR029**: The Tokenizer must recognize as an LE token the sequence "<=" (60, 61).
+- **FR030**: The Tokenizer must recognize as an NE token the sequence "<>" (60, 62).
+- **FR031**: The Tokenizer must recognize as an LSHIFT token the sequence "<<" (60, 60).
+- **FR032**: The Tokenizer must recognize as an LT token the character "<" (60).
+- **FR033**: The Tokenizer must recognize as a GE token the sequence ">=" (62, 61).
+- **FR034**: The Tokenizer must recognize as an RSHIFT token the sequence ">>" (62, 62).
+- **FR035**: The Tokenizer must recognize as a GT token the character ">" (62).
+- **FR036**: The Tokenizer must recognize as an NE token the sequence "!=" (33, 61).
+- **FR037**: The Tokenizer must recognize as a COMMA token the character "," (44).
+- **FR038**: The Tokenizer must recognize as a BITAND token the character "&" (38).
+- **FR039**: The Tokenizer must recognize as a BITNOT token the character "~" (126).
+- **FR040**: The Tokenizer must recognize as a BITOR token the character "|" (124).
+- **FR041**: The Tokenizer must recognize as a CONCAT token the sequence "||" (124, 124).
+- **FR042**: The Tokenizer must recognize as a DOT token the character "." (46).
+...
+...
+...

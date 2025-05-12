@@ -1,0 +1,102 @@
+---
+title: Tokenizador: Descrição e Requisitos
+---
+
+# 1. Objetivo
+
+Criar um mecanismo para divisão de instruções SQL (simplificadas) em tokens, para serem encaminhados ao componente analisador (Parser). Este documento define os requisitos do tokenizador, a fim de elucidar suas operações e comportamento.
+
+# 2. Classes de caractere
+
+Essa implementação assume que somente caracteres ASCII compõem instruções SQL. As seguintes classes de caracteres são definidas, por conveniência:
+		
+	### 2.1 ESPAÇO EM BRANCO
+		
+		Um destes cinco caracteres: 9, 10, 12, 13, 32
+		
+	### 2.2 ALFABÉTICO
+		
+		Qualquer caractere no intervalo [65,90], ou no intervalo [97,122], ou o caractere 95
+		
+	### 2.3 NUMÉRICO
+		
+		Qualquer caractere no intervalo [48,57]
+		
+	### 2.4 ALFANUMÉRICO
+		
+		Qualquer caractere que seja ALFABÉTICO ou NUMÉRICO
+		
+	### 2.5 HEXADECIMAL
+		
+		Qualquer caractere NUMÉRICO, ou no intervalo [65,70], ou no intervalo [97,102]
+		
+	### 2.6 ESPECIAL
+		
+		Qualquer caractere que não seja ESPAÇO EM BRANCO, ALFABÉTICO, ou NUMÉRICO
+		
+# 3. Requisitos Funcionais
+
+## 3.1 Requisitos de token
+
+- **RF001**: O texto SQL de entrada deve ser dividido em tokens, da esquerda para direita.
+- **RF002**: Em cada etapa do processo de tokenização do SQL, deverá ser extraído o token mais longo possível do texto de entrada restante.
+- **RF003**: O Tokenizador deve passar cada token que não seja ESPAÇO EM BRANCO para o analisador na ordem em que os tokens são vistos.
+- **RF004**: Quando o Tokenizador atinge o final da entrada em que o último token enviado ao analisador não era um token SEMI, ele deve enviar um token SEMI ao analisador.
+- **RF005**: Quando o Tokenizador encontra um texto que não é um token válido, ele deve causar um erro.
+
+## 3.2 Requisitos de tokens de tipo espaço em branco
+
+- **RF006**: O Tokenizador deve reconhecer uma sequência de um ou mais caracteres ESPAÇO EM BRANCO como um único token ESPAÇO EM BRANCO
+- **RF007**: O Tokenizador deve reconhecer como um token ESPAÇO EM BRANCO a sequência de dois caracteres "--" (45, 45) seguido por qualquer sequência de um ou mais caracteres até, e incluindo, o primeiro caractere 10, isto é, "\n", ou o fim de arquivo.
+- **RF008**: O Tokenizador deve reconhecer como um token ESPAÇO EM BRANCO a sequência de dois caracteres "/*" (47, 42) seguido por qualquer sequência de um ou mais caracteres até, e incluindo, a sequência de dois caracteres "*/" (42, 47), ou o fim de arquivo.
+
+## 3.3 Requisitos de tokens de tipo identificador
+
+- **RF009**: O Tokenizador deve reconhecer como um token ID uma sequência de caracteres que começam com um caractere ALFABÉTICO e continua com zero ou mais caracteres ALFANUMÉRICOS e/ou "$" (36) caracteres e que não é uma palavra-chave reservada.
+- **RF010**: O Tokenizador deve reconhecer como um token ID qualquer sequência de caracteres que começam com aspas duplas (32), seguido de zero ou mais caracteres e/ou pares de aspas duplas (32) e termina com uma aspas duplas (32) que não é parte de nenhum par.
+
+## 3.4 Requisitos de tokens de tipo literal
+
+- **RF011**: O Tokenizador deve reconhecer como um token STRING uma sequência de caracteres que começam com aspas simples (39), é seguido por zero ou mais caracteres e/ou pares de aspas simples e termina com uma aspas simples (39) que não é parte de nenhum par.
+- **RF012**: O Tokenizador deve reconhecer como um token INTEGER qualquer sequência de um ou mais caracteres NUMÉRICOS.
+- **RF013**: O Tokenizador deve reconhecer como um token FLOAT uma sequência de um ou mais caracteres NUMÉRICOS que inclui exatamente um ponto (46).
+- **RF014**: O Tokenizador deve reconhecer como um token FLOAT uma sequência de um ou mais caracteres NUMÉRICOS que inclui zero ou um ponto (46) e seguido por um sufixo de exponenciação "E" (69) ou "e" (101).
+
+## 3.5 Requisitos de tokens de tipo variável
+
+Definição auxiliar: Um "nome de parâmetro" é definido como uma sequência de um ou mais caracteres composta por caracteres ALFANUMÉRICOS e/ou "$" (36), misturados com dois-pontos (58) - que não podem estar em sequência - e, opcionalmente, seguidos por qualquer sequência de caracteres ALFANUMÉRICOS entre parênteses (40,41).
+
+- **RF015**: O Tokenizador deve reconhecer como um token VARIABLE uma interrogação (63) seguido de zero ou mais caracteres NUMÉRICOS.
+- **RF016**: O Tokenizador deve reconhecer como um token VARIABLE um arroba (64), cifrão (36), ou dois-pontos (58), seguido por um nome de parâmetro.
+- **RF017**: O Tokenizador deve reconhecer como um token VARIABLE uma hashtag (35) seguido por um nome de parâmetro que não começa com um caractere NUMÉRICO.
+- **RF018**: O Tokenizador deve reconhecer como um token REGISTER uma hashtag (35) seguido por um ou mais caracteres NUMÉRICOS
+
+## 3.6 Requisitos de tokens de tipo operador
+
+- **RF019**: O Tokenizador deve reconhecer como um token MINUS o caractere "-" (45).
+- **RF020**: O Tokenizador deve reconhecer como um token LP o caractere "(" (40).
+- **RF021**: O Tokenizador deve reconhecer como um token RP o caractere ")" (41).
+- **RF022**: O Tokenizador deve reconhecer como um token SEMI o caractere ";" (59).
+- **RF023**: O Tokenizador deve reconhecer como um token PLUS o caractere "+" (43).
+- **RF024**: O Tokenizador deve reconhecer como um token STAR o caractere "*" (42).
+- **RF025**: O Tokenizador deve reconhecer como um token SLASH o caractere "/" (47).
+- **RF026**: O Tokenizador deve reconhecer como um token REM o caractere "%" (37).
+- **RF027**: O Tokenizador deve reconhecer como um token EQ o caractere "=" (61).
+- **RF028**: O Tokenizador deve reconhecer como um token EQ a sequência de caracteres "==" (61,61).
+- **RF029**: O Tokenizador deve reconhecer como um token LE a sequência de caracteres "<=" (60,61).
+- **RF030**: O Tokenizador deve reconhecer como um token NE a sequência de caracteres "<>" (60,62).
+- **RF031**: O Tokenizador deve reconhecer como um token LSHIFT a sequência de caracteres "<<" (60,60).
+- **RF032**: O Tokenizador deve reconhecer como um token LT o caractere "<" (60).
+- **RF033**: O Tokenizador deve reconhecer como um token GE a sequência de caracteres ">=" (62,61).
+- **RF034**: O Tokenizador deve reconhecer como um token RSHIFT a sequência de caracteres ">>" (62,62).
+- **RF035**: O Tokenizador deve reconhecer como um token GT o caractere ">" (62).
+- **RF036**: O Tokenizador deve reconhecer como um token NE a sequência de caracteres "!=" (33,61).
+- **RF037**: O Tokenizador deve reconhecer como um token COMMA o caractere "," (44).
+- **RF038**: O Tokenizador deve reconhecer como um token BITAND o caractere "&" (38).
+- **RF039**: O Tokenizador deve reconhecer como um token BITNOT o caractere "~" (126).
+- **RF040**: O Tokenizador deve reconhecer como um token BITOR o caractere "|" (124).
+- **RF041**: O Tokenizador deve reconhecer como um token CONCAT a sequência de caracteres "||" (124,124).
+- **RF042**: O Tokenizador deve reconhecer como um token DOT o caractere "." (46).
+...
+...
+...
